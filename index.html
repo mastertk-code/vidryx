@@ -699,6 +699,69 @@
             }
         }
 
+        /* Success Modal Styles */
+.success-content {
+    text-align: center;
+    padding: 10px;
+}
+
+.success-icon {
+    font-size: 4rem;
+    color: #25D366;
+    margin-bottom: 20px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.success-content h4 {
+    color: var(--accent-blue);
+    margin-bottom: 15px;
+}
+
+.success-details {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    border-left: 4px solid var(--accent-blue);
+    text-align: left;
+}
+
+.success-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+}
+
+.success-details li {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.success-details li i {
+    color: #25D366;
+    margin-right: 10px;
+}
+
+.success-actions {
+    margin-top: 25px;
+}
+
+@media (max-width: 768px) {
+    .success-details {
+        text-align: center;
+    }
+    
+    .success-details li {
+        justify-content: center;
+    }
+}
             /* Booking Form Styles with Dark Theme */
         .booking-intro {
             text-align: center;
@@ -1130,6 +1193,32 @@
             opacity: 0.7;
         }
 
+                    /* Spinner Styles */
+            .spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 3px solid rgba(255,255,255,.3);
+                border-radius: 50%;
+                border-top-color: #fff;
+                animation: spin 1s ease-in-out infinite;
+            }
+            
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
+            
+            .btn {
+                position: relative;
+            }
+            
+            .btn .spinner {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-top: -10px;
+                margin-left: -10px;
+            }
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -1285,7 +1374,7 @@
         <div class="video-overlay"></div>
         
         <div class="container hero-content">
-            <!-- This is where your landing page image would go -->
+            
             <div style="width: 100%; height: 300px; border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;">
                 <span style="font-size: 1.2rem; color: var(--accent-blue);"><img src="images/logo.png" alt=""></span>
             </div>
@@ -1581,7 +1670,8 @@
     <section id="contact" class="contact">
         <div class="container">
             <h2 class="section-title animate">Get In <span>Touch</span></h2>
-            <form class="contact-form animate" id="contactForm" action="https://formspree.io/f/mkgvyrdy" method="POST">               
+                 <!-- Contact Form -->
+            <form class="contact-form animate" id="contactForm" onsubmit="return handleContactForm(event)">
                 <div class="form-group">
                     <input type="text" class="form-control" name="name" placeholder="Your Name" required>
                 </div>
@@ -1595,7 +1685,10 @@
                     <textarea class="form-control" name="message" placeholder="Your Message" required></textarea>
                 </div>
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">Send Message</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span id="submitText">Send Message</span>
+                        <div id="submitSpinner" class="spinner" style="display: none;"></div>
+                    </button>
                 </div>
             </form>
             <div class="social-widget">
@@ -1792,6 +1885,37 @@
             </div>
         </div>
     </div>
+    <!-- Contact Success Modal -->
+<div class="modal-overlay" id="contactSuccessModal">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Message Sent Successfully!</h3>
+            <span class="modal-close" data-modal="contactSuccessModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="success-content">
+                <div class="success-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h4>Thank You for Contacting Us!</h4>
+                <p>Your message has been received and we'll get back to you within 24 hours.</p>
+                
+                <div class="success-details">
+                    <p><strong>What happens next?</strong></p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> We'll review your inquiry</li>
+                        <li><i class="fas fa-check"></i> Our team will contact you</li>
+                        <li><i class="fas fa-check"></i> We'll provide a customized solution</li>
+                    </ul>
+                </div>
+                
+                <div class="success-actions">
+                    <button class="btn btn-primary" onclick="closeModal('contactSuccessModal')">Continue Browsing</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
   // Header scroll effect (safe)
   window.addEventListener('scroll', function () {
@@ -1802,6 +1926,101 @@
     }
   });
 
+    // Handle contact form submission
+async function handleContactForm(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const submitText = form.querySelector('#submitText');
+    const submitSpinner = form.querySelector('#submitSpinner');
+    
+    // Show loading state
+    submitText.textContent = 'Sending...';
+    submitSpinner.style.display = 'inline-block';
+    submitButton.disabled = true;
+    
+    try {
+        // Prepare form data
+        const formData = new FormData(form);
+        
+        // Send to Formspree
+        const response = await fetch('https://formspree.io/f/mkgvyrdy', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // Show success modal
+            showContactSuccessModal();
+            // Reset form
+            form.reset();
+        } else {
+            throw new Error('Form submission failed');
+        }
+    } catch (error) {
+        // Show error message
+        alert('Sorry, there was an error sending your message. Please try again or contact us directly at tkprosper08@gmail.com');
+        console.error('Form submission error:', error);
+    } finally {
+        // Reset button state
+        submitText.textContent = 'Send Message';
+        submitSpinner.style.display = 'none';
+        submitButton.disabled = false;
+    }
+    
+    // Prevent default form submission
+    return false;
+}
+
+// Function to show contact success modal
+function showContactSuccessModal() {
+    const successModal = document.getElementById('contactSuccessModal');
+    if (successModal) {
+        successModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Add event listener to close success modal
+document.addEventListener('DOMContentLoaded', function() {
+    const successCloseBtn = document.querySelector('[data-modal="contactSuccessModal"]');
+    if (successCloseBtn) {
+        successCloseBtn.addEventListener('click', function() {
+            closeModal('contactSuccessModal');
+        });
+    }
+    
+    // Close success modal when clicking outside
+    const successModal = document.getElementById('contactSuccessModal');
+    if (successModal) {
+        successModal.addEventListener('click', function(e) {
+            if (e.target === successModal) {
+                closeModal('contactSuccessModal');
+            }
+        });
+    }
+            // Helper functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+});
+    
   document.addEventListener('DOMContentLoaded', () => {
     // ---- Safe element lookups ----
     const offerClose = document.getElementById('offerClose');
@@ -1847,10 +2066,8 @@
       if (!stillActive) document.body.style.overflow = '';
     }
 
-    // ---- Global overlay click handler (closes on clicking outside content) ----
     document.querySelectorAll('.modal-overlay').forEach(modal => {
       modal.addEventListener('click', (e) => {
-        // only close when clicking directly on the overlay (not on modal content)
         if (e.target === modal) {
           closeModal(modal.id);
         }
@@ -1942,7 +2159,7 @@ Please confirm my booking.`;
       });
     }
 
-    // ---- Show Auto Reply Modal (use openModal so it benefits from global handlers) ----
+    // ---- Show Auto Reply Modal  ----
     function showAutoReplyModal(name, phone, date, time, topic) {
       const autoReplyModal = document.getElementById('autoReplyModal');
       if (!autoReplyModal) return;
@@ -1962,7 +2179,7 @@ Please confirm my booking.`;
 
   }); // end DOMContentLoaded
 
-  // ---- Scroll animations (kept as before) ----
+  // ---- Scroll animations  ----
   function checkScroll() {
     const elements = document.querySelectorAll('.animate');
     elements.forEach(element => {
